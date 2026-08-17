@@ -1,0 +1,30 @@
+import { apiClient } from "../../../lib/api/client";
+
+export type UserRole = "STAFF" | "ADMIN" | "SUPERADMIN";
+
+export type UserStatus = "ACTIVE" | "PENDING" | "SUSPENDED" | "DISABLED";
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface AuthenticatedUser {
+  id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  status: UserStatus;
+}
+
+export interface LoginResponse {
+  user: AuthenticatedUser;
+  accessToken: string;
+}
+
+export async function login(input: LoginInput): Promise<LoginResponse> {
+  return apiClient<LoginResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
