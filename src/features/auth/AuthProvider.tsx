@@ -7,6 +7,7 @@ import {
 import type {
   AuthenticatedUser,
   AuthStatus,
+  LoginInput,
 } from "./types";
 
 import {
@@ -16,6 +17,8 @@ import {
 
 import { refresh } from "./api/refresh";
 import { getProfile } from "./api/profile";
+import { login as loginApi } from "./api/login";
+import { logout as logoutApi } from "./api/logout";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -46,6 +49,21 @@ export function AuthProvider({
     setAccessToken(null);
     setUser(null);
     setStatus("unauthenticated");
+  }
+
+  
+  async function login(input: LoginInput) {
+    const result = await loginApi(input);
+
+    setAuthentication(result.accessToken, result.user);
+  }
+
+  async function logout() {
+    try {
+      await logoutApi();
+    } finally {
+      clearAuthentication();
+    }
   }
 
   useEffect(() => {
@@ -93,6 +111,8 @@ export function AuthProvider({
     accessToken,
     user,
     status,
+    login,
+    logout,
     setAuthentication,
     clearAuthentication,
   };
