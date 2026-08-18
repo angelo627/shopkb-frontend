@@ -2,6 +2,8 @@ export type UserRole = "STAFF" | "ADMIN" | "SUPERADMIN";
 
 export type UserStatus = "ACTIVE" | "PENDING" | "SUSPENDED" | "DISABLED";
 
+export type AuthStatus = "initializing" | "authenticated" | "unauthenticated";
+
 export interface AuthenticatedUser {
   id: string;
   fullName: string;

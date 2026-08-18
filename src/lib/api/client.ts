@@ -23,22 +23,34 @@ export class ApiError extends Error {
   }
 }
 
+export interface ApiClientOptions extends RequestInit {
+  accessToken?: string | null;
+}
+
 export async function apiClient<T>(
   endpoint: string,
-  options: RequestInit = {},
+  options: ApiClientOptions = {},
 ): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
 
-  const isFormData = options.body instanceof FormData;
+  const { accessToken, headers: customHeaders, ...requestOptions } = options;
 
-  const headers: HeadersInit = {
-    ...(isFormData ? {} : { "Content-Type": "application/json" }),
-    ...options.headers,
-  };
+  const isFormData = requestOptions.body instanceof FormData;
+
+  const headers = new Headers(customHeaders);
+
+  if (!isFormData && requestOptions.body !== undefined) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (accessToken) {
+    headers.set("Authorization", `Bearer ${accessToken}`);
+  }
 
   const response = await fetch(url, {
-    ...options,
+    ...requestOptions,
     headers,
+    credentials: "include",
   });
 
   let result: ApiResponse<T>;
