@@ -10,7 +10,7 @@ export interface RegisterInput {
 export async function register(
   input: RegisterInput,
 ): Promise<AuthenticatedUser> {
-  return apiClient<AuthenticatedUser>("/register", {
+  return apiClient<AuthenticatedUser>("/auth/register", {
     method: "POST",
     body: JSON.stringify(input),
   });

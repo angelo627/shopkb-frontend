@@ -1,1 +1,3 @@
-/* App-level styles will be added here when needed. */
+#root {
+    min-height: 100vh;
+}
