@@ -3,16 +3,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { LoginPage } from "../pages/LoginPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { ProtectedRoute } from "./ProtectedRoute";
-
-function DashboardPage() {
-  return (
-    <main className="min-h-screen bg-background p-8">
-      <h1 className="text-3xl font-bold text-text-primary">ShopKB Dashboard</h1>
-
-      <p className="mt-2 text-text-secondary">Authentication is working.</p>
-    </main>
-  );
-}
+import { DashboardPage } from "../pages/DashboardPage";
+import { DashboardLayout } from "../layouts/DashboardLayout";
 
 export function AppRouter() {
   return (
@@ -24,10 +16,12 @@ export function AppRouter() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardPage />
+            <DashboardLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<DashboardPage />} />
+      </Route>
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
