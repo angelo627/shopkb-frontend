@@ -46,7 +46,9 @@ a {
     /* ShopKB Brand Colors */
     --color-primary: #dc2626;
     --color-primary-hover: #b91c1c;
-
+    --color-orange-hover: #ffa500;
+    --color-orange: #ffa500;
+    
     --color-success: #16a34a;
     --color-success-hover: #15803d;
 
