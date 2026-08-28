@@ -1,23 +1,47 @@
-interface TopbarProps {
-  title?: string;
-}
+import { useLocation } from "react-router-dom";
 
-export function Topbar({ title = "Dashboard" }: TopbarProps) {
+import { adminNavigation, staffNavigation } from "../config/navigation";
+import { useAuth } from "../features/auth/useAuth";
+
+export function Topbar() {
+  const { user } = useAuth();
+  const location = useLocation();
+
+  const navigationItems = user?.role === "STAFF" ? staffNavigation : adminNavigation;
+
+  const currentItem = navigationItems.find(
+    (item) => item.path === location.pathname,
+  );
+
+  const title = currentItem?.label ?? "Dashboard";
+
+  const initials =
+    user?.fullName
+      .split(" ")
+      .map((name) => name.charAt(0))
+      .join("")
+      .slice(0, 2)
+      .toUpperCase() ?? "U";
+
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+    <header className="flex h-20 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
       <div>
         <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
       </div>
 
       <div className="flex items-center gap-4">
         <div className="text-right">
-          <p className="text-sm font-medium text-text-primary">User</p>
+          <p className="text-sm font-medium text-text-primary">
+            {user?.fullName ?? "User"}
+          </p>
 
-          <p className="text-xs text-text-secondary">Staff</p>
+          <p className="text-xs text-text-secondary">
+            {user?.role ?? "Unknown"}
+          </p>
         </div>
 
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white">
-          N
+          {initials}
         </div>
       </div>
     </header>

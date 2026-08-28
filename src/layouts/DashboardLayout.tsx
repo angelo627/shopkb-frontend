@@ -2,59 +2,17 @@ import { Outlet, useNavigate } from "react-router-dom";
 
 import { Sidebar } from "../components/Sidebar";
 import { Topbar } from "../components/Topbar";
-import {
-  BarChart3,
-  Boxes,
-  LayoutDashboard,
-  Settings,
-  Truck,
-  Users,
-  Wallet,
-} from "lucide-react";
 import { useAuth } from "../features/auth/useAuth";
 import { logout } from "../features/auth/api/logout";
+import { adminNavigation, staffNavigation } from "../config/navigation";
 
-const navigationItems = [
-  {
-    label: "Dashboard",
-    path: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    label: "Sales",
-    path: "/sales",
-    icon: BarChart3,
-  },
-  {
-    label: "Inventory",
-    path: "/inventory",
-    icon: Boxes,
-  },
-  {
-    label: "Finance",
-    path: "/finance",
-    icon: Wallet,
-  },
-  {
-    label: "Delivery",
-    path: "/delivery",
-    icon: Truck,
-  },
-  {
-    label: "Users",
-    path: "/users",
-    icon: Users,
-  },
-  {
-    label: "Settings",
-    path: "/settings",
-    icon: Settings,
-  },
-];
 
 export function DashboardLayout() {
-  const { clearAuthentication } = useAuth();
+  const { user, clearAuthentication } = useAuth();
   const navigate = useNavigate();
+
+  const navigationItems = user?.role === "STAFF" ? staffNavigation : adminNavigation;
+
 
   async function handleLogout() {
     try {
@@ -66,13 +24,15 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar items={navigationItems} onLogout={handleLogout} />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
+        <div className="shrink-0">
+          <Topbar />
+        </div>
 
-        <main className="flex-1 p-6">
+        <main className="min-h-0 flex-1 overflow-y-auto p-6">
           <Outlet />
         </main>
       </div>
