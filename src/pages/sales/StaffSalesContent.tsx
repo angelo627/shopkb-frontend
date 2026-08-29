@@ -1,17 +1,8 @@
-export function SalesPage() {
+export function StaffSalesContent() {
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-text-primary">Sales</h1>
-
-        <p className="mt-1 text-sm text-text-secondary">
-          Manage and monitor your shop's sales.
-        </p>
-      </div>
-
+    <>
       {/* Summary Cards */}
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div className="rounded-xl border border-border bg-surface p-5">
           <p className="text-sm text-text-secondary">Today's Sales</p>
 
@@ -19,7 +10,7 @@ export function SalesPage() {
         </div>
 
         <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-sm text-text-secondary">Number of Sales</p>
+          <p className="text-sm text-text-secondary">Sales Today</p>
 
           <p className="mt-2 text-2xl font-bold text-text-primary">0</p>
         </div>
@@ -29,24 +20,18 @@ export function SalesPage() {
 
           <p className="mt-2 text-2xl font-bold text-green-600">0</p>
         </div>
-
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="text-sm text-text-secondary">Pending</p>
-
-          <p className="mt-2 text-2xl font-bold text-orange-600">0</p>
-        </div>
       </section>
 
-      {/* Sales Table */}
+      {/* Staff Sales */}
       <section className="rounded-xl border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border p-6">
           <div>
             <h2 className="text-lg font-semibold text-text-primary">
-              Recent Sales
+              My Recent Sales
             </h2>
 
             <p className="mt-1 text-sm text-text-secondary">
-              Your latest sales transactions.
+              Your recent sales transactions.
             </p>
           </div>
 
@@ -75,10 +60,6 @@ export function SalesPage() {
                 </th>
 
                 <th className="px-6 py-3 font-medium text-text-secondary">
-                  Status
-                </th>
-
-                <th className="px-6 py-3 font-medium text-text-secondary">
                   Date
                 </th>
               </tr>
@@ -87,7 +68,7 @@ export function SalesPage() {
             <tbody>
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={4}
                   className="px-6 py-12 text-center text-text-secondary"
                 >
                   No sales available yet.
@@ -97,6 +78,6 @@ export function SalesPage() {
           </table>
         </div>
       </section>
-    </div>
+    </>
   );
 }

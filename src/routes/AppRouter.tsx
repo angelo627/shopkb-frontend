@@ -5,7 +5,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { RegisterPage } from "../pages/RegisterPage";
 import { AdminDashboardPage } from "../pages/AdminDashboardPage";
 import { StaffDashboardPage } from "../pages/StaffDashboardPage";
-import { SalesPage } from "../pages/SalesPage";
+import { SalesPage } from "../pages/sales/SalesPage";
 
 import { ProtectedRoute } from "./ProtectedRoute";
 import { DashboardLayout } from "../layouts/DashboardLayout";
