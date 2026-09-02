@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "../context/useTheme";
 
 import { useAuth } from "../features/auth/useAuth";
 
@@ -12,6 +14,7 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { theme, toggleTheme } = useTheme();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -42,6 +45,32 @@ export function LoginPage() {
       <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
         <section className="w-full max-w-md">
           <div className="rounded-2xl border border-border bg-surface p-8 shadow-sm">
+            {/* ShopKB Logo */}
+            {/* Theme Toggle */}
+            <div className="mb-4 flex justify-end">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label={
+                  theme === "light"
+                    ? "Switch to dark mode"
+                    : "Switch to light mode"
+                }
+                title={
+                  theme === "light"
+                    ? "Switch to dark mode"
+                    : "Switch to light mode"
+                }
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-text-secondary transition hover:bg-background hover:text-text-primary"
+              >
+                {theme === "light" ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5" />
+                )}
+              </button>
+            </div>
+
             {/* ShopKB Logo */}
             <div className="mb-6">
               <img

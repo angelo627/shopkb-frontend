@@ -45,7 +45,7 @@ export function Sidebar({ items, onLogout }: SidebarProps) {
                   `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                     isActive
                       ? "bg-green-600 text-white"
-                      : "text-text-secondary hover:bg-green-50 hover:text-green-700"
+                      : "text-text-secondary hover:bg-background hover:text-text-primary"
                   }`
                 }
               >
