@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -15,6 +16,8 @@ import {
   type AuthContextValue,
 } from "./auth-context";
 
+import { setAccessTokenGetter } from "../../lib/api/client";
+
 import { refresh } from "./api/refresh";
 import { getProfile } from "./api/profile";
 import { login as loginApi } from "./api/login";
@@ -27,6 +30,8 @@ interface AuthProviderProps {
 export function AuthProvider({
   children,
 }: AuthProviderProps) {
+  const accessTokenRef = useRef<string | null>(null);
+
   const [accessToken, setAccessToken] =
     useState<string | null>(null);
 
@@ -36,17 +41,22 @@ export function AuthProvider({
   const [status, setStatus] =
     useState<AuthStatus>("initializing");
 
+    function updateAccessToken(token: string | null) {
+      accessTokenRef.current = token;
+      setAccessToken(token);
+    }
+
   function setAuthentication(
     token: string,
     authenticatedUser: AuthenticatedUser,
   ) {
-    setAccessToken(token);
+    updateAccessToken(token);
     setUser(authenticatedUser);
     setStatus("authenticated");
   }
 
   function clearAuthentication() {
-    setAccessToken(null);
+    updateAccessToken(null);
     setUser(null);
     setStatus("unauthenticated");
   }
@@ -67,6 +77,14 @@ export function AuthProvider({
   }
 
   useEffect(() => {
+    setAccessTokenGetter(() => accessTokenRef.current);
+
+    return () => {
+      setAccessTokenGetter(null);
+    };
+  }, []);
+
+  useEffect(() => {
     let isMounted = true;
 
     async function restoreSession() {
@@ -79,7 +97,7 @@ export function AuthProvider({
 
         const token = refreshResult.accessToken;
 
-        setAccessToken(token);
+        updateAccessToken(token);
 
         const user = await getProfile(token);
 
@@ -94,7 +112,7 @@ export function AuthProvider({
           return;
         }
 
-        setAccessToken(null);
+        updateAccessToken(null);
         setUser(null);
         setStatus("unauthenticated");
       }

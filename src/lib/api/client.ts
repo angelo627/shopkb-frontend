@@ -4,6 +4,12 @@ if (!API_BASE_URL) {
   throw new Error("VITE_API_BASE_URL is not configured.");
 }
 
+let accessTokenGetter: (() => string | null) | null = null;
+
+export function setAccessTokenGetter(getter: (() => string | null) | null) {
+  accessTokenGetter = getter;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   statusCode: number;
@@ -43,8 +49,11 @@ export async function apiClient<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  if (accessToken) {
-    headers.set("Authorization", `Bearer ${accessToken}`);
+  const token =
+    accessToken !== undefined ? accessToken : (accessTokenGetter?.() ?? null);
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
   }
 
   const response = await fetch(url, {

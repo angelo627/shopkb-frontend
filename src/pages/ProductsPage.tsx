@@ -138,7 +138,9 @@ export function ProductsPage() {
         id="create-product"
         className="rounded-xl border border-border bg-surface p-6"
       >
-        <h2 className="text-lg font-semibold text-text-primary">Add Product</h2>
+        <h2 className="text-lg font-semibold text-text-primary">
+          Create product
+        </h2>
 
         <form
           onSubmit={handleSubmit}
@@ -153,6 +155,7 @@ export function ProductsPage() {
               type="text"
               value={name}
               onChange={(event) => setName(event.target.value)}
+              placeholder="Enter product name"
               required
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
@@ -165,6 +168,7 @@ export function ProductsPage() {
               type="text"
               value={sku}
               onChange={(event) => setSku(event.target.value)}
+              placeholder="Enter product SKU"
               required
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
@@ -178,6 +182,7 @@ export function ProductsPage() {
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
+              placeholder="Enter product description"
               rows={4}
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
@@ -193,6 +198,7 @@ export function ProductsPage() {
               min="0"
               value={costPrice}
               onChange={(event) => setCostPrice(event.target.value)}
+              placeholder="Enter cost price"
               required
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
@@ -208,6 +214,7 @@ export function ProductsPage() {
               min="0"
               value={sellingPrice}
               onChange={(event) => setSellingPrice(event.target.value)}
+              placeholder="Enter selling price"
               required
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
@@ -223,6 +230,7 @@ export function ProductsPage() {
               min="0"
               value={stockQuantity}
               onChange={(event) => setStockQuantity(event.target.value)}
+              placeholder="Enter stock quantity"
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
@@ -237,6 +245,7 @@ export function ProductsPage() {
               min="0"
               value={minimumStock}
               onChange={(event) => setMinimumStock(event.target.value)}
+              placeholder="Enter minimum stock level"
               className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
             />
           </div>
