@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createProduct } from "../features/products/api/createProduct";
+import { useToast } from "../components/feedback/useToast";
 // import {
 //   AlertTriangle,
 //   ImagePlus,
@@ -12,6 +13,7 @@ import { createProduct } from "../features/products/api/createProduct";
 import { ImagePlus, Plus, Zap } from "lucide-react";
 
 export function ProductsPage() {
+  const { notify } = useToast();
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [description, setDescription] = useState("");
@@ -22,7 +24,6 @@ export function ProductsPage() {
   const [image, setImage] = useState<File | undefined>();
 
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [topQuickAccessOpen, setTopQuickAccessOpen] = useState(false);
@@ -32,13 +33,15 @@ export function ProductsPage() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      setMessage("Please select a valid image file.");
+      notify({
+        type: "error",
+        message: "Please select a valid image file.",
+      });
       return;
     }
 
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
-    setMessage("");
   }
 
   function scrollToSection(id: string) {
@@ -59,7 +62,6 @@ export function ProductsPage() {
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setMessage("");
     setLoading(true);
 
     try {
@@ -74,7 +76,10 @@ export function ProductsPage() {
         image,
       });
 
-      setMessage("Product created successfully.");
+      notify({
+        type: "success",
+        message: "Product created successfully.",
+      });
 
       // Clear form
       setName("");
@@ -87,9 +92,11 @@ export function ProductsPage() {
       setImage(undefined);
       setImagePreview(null);
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Failed to create product.",
-      );
+      notify({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to create product.",
+      });
     } finally {
       setLoading(false);
     }
@@ -355,12 +362,6 @@ export function ProductsPage() {
               {loading ? "Creating..." : "Create Product"}
             </button>
           </div>
-
-          {message && (
-            <p className="md:col-span-2 text-sm text-text-secondary">
-              {message}
-            </p>
-          )}
         </form>
       </section>
 

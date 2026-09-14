@@ -6,13 +6,16 @@ import "./index.css";
 import App from "./App";
 import { AuthProvider } from "./features/auth/AuthProvider";
 import { ThemeProvider } from "./context/ThemeProvider";
+import { ToastProvider } from "./components/feedback/ToastProvider";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
-          <App />
+          <ToastProvider>
+            <App />
+          </ToastProvider>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
