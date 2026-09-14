@@ -4,22 +4,22 @@ import { Moon, Sun } from "lucide-react";
 import { useTheme } from "../context/useTheme";
 
 import { useAuth } from "../features/auth/useAuth";
+import { useToast } from "../components/feedback/useToast";
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { notify } = useToast();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { theme, toggleTheme } = useTheme();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setError(null);
     setIsSubmitting(true);
 
     try {
@@ -28,13 +28,20 @@ export function LoginPage() {
         password,
       });
 
+      notify({
+        type: "success",
+        message: "Signed in successfully.",
+      });
+      
       navigate("/dashboard");
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Unable to sign in. Please try again.");
-      }
+      notify({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to sign in. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -147,16 +154,6 @@ export function LoginPage() {
                   </button>
                 </div>
               </div>
-
-              {/* Error */}
-              {error && (
-                <div
-                  role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                >
-                  {error}
-                </div>
-              )}
 
               {/* Submit */}
               <button

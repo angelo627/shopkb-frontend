@@ -7,7 +7,7 @@ interface ToastProps {
 }
 
 export function Toast({ notification }: ToastProps) {
-  const { type, message } = notification;
+  const { type, message, isExiting } = notification;
 
   const icon =
     type === "success" ? (
@@ -20,16 +20,28 @@ export function Toast({ notification }: ToastProps) {
 
   const iconClass =
     type === "success"
-      ? "text-success"
+      ? "bg-success/10 text-success"
       : type === "error"
-        ? "text-primary"
-        : "text-warning";
+        ? "bg-primary/10 text-primary"
+        : "bg-warning/10 text-warning";
 
   return (
-    <div className="flex w-full max-w-md items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 shadow-lg">
-      <div className={iconClass}>{icon}</div>
+    <div
+      className={`relative flex w-full max-w-lg items-center gap-4 overflow-hidden rounded-xl border border-border bg-surface px-5 py-4 shadow-xl ${
+        isExiting
+          ? "animate-[toast-out_0.3s_ease-in_forwards]"
+          : "animate-[toast-in_0.35s_ease-out]"
+      }`}
+    >
+      <div
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${iconClass}`}
+      >
+        {icon}
+      </div>
 
-      <p className="flex-1 text-sm font-medium text-text-primary">{message}</p>
+      <p className="flex-1 text-sm font-medium leading-6 text-text-primary">
+        {message}
+      </p>
     </div>
   );
 }

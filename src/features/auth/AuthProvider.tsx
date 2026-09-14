@@ -32,6 +32,11 @@ export function AuthProvider({
 }: AuthProviderProps) {
   const accessTokenRef = useRef<string | null>(null);
 
+  const restoreSessionPromiseRef = useRef<Promise<{
+    accessToken: string;
+    user: AuthenticatedUser;
+  }> | null>(null);
+
   const [accessToken, setAccessToken] =
     useState<string | null>(null);
 
@@ -85,45 +90,53 @@ export function AuthProvider({
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
+  let isMounted = true;
 
-    async function restoreSession() {
-      try {
+  async function restoreSession() {
+    if (!restoreSessionPromiseRef.current) {
+      restoreSessionPromiseRef.current = (async () => {
         const refreshResult = await refresh();
-
-        if (!isMounted) {
-          return;
-        }
 
         const token = refreshResult.accessToken;
 
-        updateAccessToken(token);
-
         const user = await getProfile(token);
 
-        if (!isMounted) {
-          return;
-        }
-
-        setUser(user);
-        setStatus("authenticated");
-      } catch {
-        if (!isMounted) {
-          return;
-        }
-
-        updateAccessToken(null);
-        setUser(null);
-        setStatus("unauthenticated");
-      }
+        return {
+          accessToken: token,
+          user,
+        };
+      })();
     }
 
-    restoreSession();
+    try {
+      const result = await restoreSessionPromiseRef.current;
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      if (!isMounted) {
+        return;
+      }
+
+      updateAccessToken(result.accessToken);
+      setUser(result.user);
+      setStatus("authenticated");
+    } catch (error) {
+      console.error("Session restoration failed:", error);
+
+      if (!isMounted) {
+        return;
+      }
+
+      updateAccessToken(null);
+      setUser(null);
+      setStatus("unauthenticated");
+    }
+  }
+
+  restoreSession();
+
+  return () => {
+    isMounted = false;
+  };
+}, []);
 
   const value: AuthContextValue = {
     accessToken,

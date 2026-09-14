@@ -6,6 +6,7 @@ export interface FeedbackNotification {
   id: string;
   type: FeedbackType;
   message: string;
+  isExiting?: boolean;
 }
 
 export interface ToastContextValue {

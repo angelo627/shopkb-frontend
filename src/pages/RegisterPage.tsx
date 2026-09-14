@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "../context/useTheme";
+import { useToast } from "../components/feedback/useToast";
 
 import {
   register as registerApi,
@@ -11,6 +12,7 @@ import {
 export function RegisterPage() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { notify } = useToast();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,22 +23,24 @@ export function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setError(null);
-    setSuccess(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      notify({
+        type: "error",
+        message: "Passwords do not match.",
+      });
       return;
     }
 
     if (password.length < 12) {
-      setError("Password must be at least 12 characters.");
+      notify({
+        type: "error",
+        message: "Password must be at least 12 characters.",
+      });
       return;
     }
 
@@ -51,9 +55,11 @@ export function RegisterPage() {
     try {
       await registerApi(input);
 
-      setSuccess(
-        "Account created successfully. Your account is pending activation.",
-      );
+      notify({
+        type: "success",
+        message:
+          "Account created successfully. Your account is pending activation.",
+      });
 
       setFullName("");
       setEmail("");
@@ -64,12 +70,14 @@ export function RegisterPage() {
         navigate("/login");
       }, 2000);
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Unable to create your account. Please try again.");
-      }
-    } finally {
+      notify({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to create your account. Please try again.",
+      });
+    }finally {
       setIsSubmitting(false);
     }
   }
@@ -229,24 +237,6 @@ export function RegisterPage() {
                   </button>
                 </div>
               </div>
-
-              {error && (
-                <div
-                  role="alert"
-                  className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-                >
-                  {error}
-                </div>
-              )}
-
-              {success && (
-                <div
-                  role="status"
-                  className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
-                >
-                  {success}
-                </div>
-              )}
 
               <button
                 type="submit"

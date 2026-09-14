@@ -31,6 +31,19 @@ export function ToastProvider({ children }: ToastProviderProps) {
 
       setTimeout(() => {
         setNotifications((currentNotifications) =>
+          currentNotifications.map((currentNotification) =>
+            currentNotification.id === id
+              ? {
+                  ...currentNotification,
+                  isExiting: true,
+                }
+              : currentNotification,
+          ),
+        );
+      }, 3700);
+
+      setTimeout(() => {
+        setNotifications((currentNotifications) =>
           currentNotifications.filter(
             (currentNotification) => currentNotification.id !== id,
           ),
