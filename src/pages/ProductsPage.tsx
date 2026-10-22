@@ -1,16 +1,12 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createProduct } from "../features/products/api/createProduct";
+import {
+  getProducts,
+  type ProductListItem,
+} from "../features/products/api/getProducts";
 import { useToast } from "../components/feedback/useToast";
-// import {
-//   AlertTriangle,
-//   ImagePlus,
-//   Package,
-//   Plus,
-//   Search,
-//   Zap,
-// } from "lucide-react";
 
-import { ImagePlus, Plus, Zap } from "lucide-react";
+import { ImagePlus, Plus, Zap, Package } from "lucide-react";
 
 export function ProductsPage() {
   const { notify } = useToast();
@@ -24,10 +20,17 @@ export function ProductsPage() {
   const [image, setImage] = useState<File | undefined>();
 
   const [loading, setLoading] = useState(false);
+  const [products, setProducts] = useState<ProductListItem[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [topQuickAccessOpen, setTopQuickAccessOpen] = useState(false);
   const [floatingQuickAccessOpen, setFloatingQuickAccessOpen] = useState(false);
+
+  const productsSectionRef = useRef<HTMLElement | null>(null);
 
   function handleImageChange(file?: File) {
     if (!file) return;
@@ -59,6 +62,39 @@ export function ProductsPage() {
     setImagePreview(null);
   }
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchProducts() {
+      try {
+        const result = await getProducts({ page });
+
+        if (cancelled) return;
+
+        setProducts(result.items);
+        setTotalPages(result.pagination.totalPages);
+      } catch (error) {
+        if (cancelled) return;
+
+        notify({
+          type: "error",
+          message:
+            error instanceof Error ? error.message : "Failed to load products.",
+        });
+      } finally {
+        if (!cancelled) {
+          setIsLoadingProducts(false);
+        }
+      }
+    }
+
+    fetchProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, refreshKey, notify]);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -80,6 +116,9 @@ export function ProductsPage() {
         type: "success",
         message: "Product created successfully.",
       });
+
+      setPage(1);
+      setRefreshKey((currentKey) => currentKey + 1);
 
       // Clear form
       setName("");
@@ -136,11 +175,24 @@ export function ProductsPage() {
 
                 <span>Create Product</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  scrollToSection("products");
+                  setTopQuickAccessOpen(false);
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-text-primary transition hover:bg-background"
+              >
+                <Package size={16} />
+                <span>Products</span>
+              </button>
             </div>
           )}
         </div>
       </div>
 
+      {/* create product section */}
       <section
         id="create-product"
         className="rounded-xl border border-border bg-surface p-6"
@@ -365,6 +417,134 @@ export function ProductsPage() {
         </form>
       </section>
 
+      {/* get product section */}
+      <section
+        id="products"
+        ref={productsSectionRef}
+        className="rounded-xl border border-border bg-surface p-6"
+      >
+        <h2 className="text-lg font-semibold text-text-primary">Products</h2>
+
+        <div className="mt-6 space-y-3">
+          {isLoadingProducts ? (
+            <p className="py-8 text-center text-sm text-text-secondary">
+              Loading products...
+            </p>
+          ) : products.length === 0 ? (
+            <p className="py-8 text-center text-sm text-text-secondary">
+              No products found.
+            </p>
+          ) : (
+            products.map((product) => (
+              <div
+                key={product.id}
+                className="rounded-lg border border-border p-4"
+              >
+                <div className="flex items-center gap-4">
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="h-16 w-16 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-background text-xs text-text-secondary">
+                      No image
+                    </div>
+                  )}
+
+                  <div className="flex-1">
+                    <p className="font-medium text-text-primary">
+                      {product.name}
+                    </p>
+
+                    <p className="mt-1 text-sm text-text-secondary">
+                      SKU: {product.sku}
+                    </p>
+                  </div>
+
+                  <p className="text-sm font-medium text-text-primary">
+                    {product.status}
+                  </p>
+                </div>
+
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+                  <div>
+                    <p className="text-text-secondary">Cost Price</p>
+                    <p className="font-medium text-text-primary">
+                      {product.costPrice}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-text-secondary">Selling Price</p>
+                    <p className="font-medium text-text-primary">
+                      {product.sellingPrice}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-text-secondary">Stock</p>
+                    <p className="font-medium text-text-primary">
+                      {product.stockQuantity}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-text-secondary">Minimum Stock</p>
+                    <p className="font-medium text-text-primary">
+                      {product.minimumStock}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+          <p className="text-sm text-text-secondary">
+            Page {page} of {totalPages}
+          </p>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                productsSectionRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+
+                setIsLoadingProducts(true);
+                setPage((currentPage) => currentPage - 1);
+              }}
+              disabled={page === 1 || isLoadingProducts}
+              className="rounded-lg border border-border px-4 py-2 text-sm text-text-primary transition hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Previous
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                productsSectionRef.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+
+                setIsLoadingProducts(true);
+                setPage((currentPage) => currentPage + 1);
+              }}
+              disabled={page === totalPages || isLoadingProducts}
+              className="rounded-lg border border-border px-4 py-2 text-sm text-text-primary transition hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Floating Quick Access */}
       <div className="fixed bottom-6 right-6 z-50">
         {floatingQuickAccessOpen && (
@@ -377,6 +557,18 @@ export function ProductsPage() {
               <Plus size={16} />
 
               <span>Create Product</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                scrollToSection("products");
+                setFloatingQuickAccessOpen(false);
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm text-text-primary transition hover:bg-background"
+            >
+              <Package size={16} />
+              <span>Products</span>
             </button>
           </div>
         )}
