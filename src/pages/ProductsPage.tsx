@@ -6,7 +6,7 @@ import {
 } from "../features/products/api/getProducts";
 import { useToast } from "../components/feedback/useToast";
 
-import { ImagePlus, Plus, Zap, Package } from "lucide-react";
+import { ImagePlus, Plus, Zap, Package, X } from "lucide-react";
 
 export function ProductsPage() {
   const { notify } = useToast();
@@ -29,6 +29,8 @@ export function ProductsPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [topQuickAccessOpen, setTopQuickAccessOpen] = useState(false);
   const [floatingQuickAccessOpen, setFloatingQuickAccessOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   const productsSectionRef = useRef<HTMLElement | null>(null);
 
@@ -63,11 +65,24 @@ export function ProductsPage() {
   }
 
   useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [search]);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function fetchProducts() {
       try {
-        const result = await getProducts({ page });
+        const result = await getProducts({
+          page,
+          search: debouncedSearch.trim() || undefined,
+        });
 
         if (cancelled) return;
 
@@ -93,7 +108,7 @@ export function ProductsPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, refreshKey, notify]);
+  }, [page, refreshKey, debouncedSearch, notify]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -423,7 +438,40 @@ export function ProductsPage() {
         ref={productsSectionRef}
         className="rounded-xl border border-border bg-surface p-6"
       >
-        <h2 className="text-lg font-semibold text-text-primary">Products</h2>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold text-text-primary">Products</h2>
+
+          <div className="relative w-full sm:max-w-sm">
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setPage(1);
+              }}
+              placeholder="Search by product name or SKU..."
+              className="w-full rounded-lg border border-border bg-background px-4 py-2 pr-10 text-sm text-text-primary outline-none transition focus:border-primary"
+            />
+
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                aria-label="Clear product search"
+                className="group/clear absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-text-secondary transition hover:bg-surface hover:text-text-primary"
+              >
+                <X size={16} />
+
+                <span className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition-all duration-200 group-hover/clear:translate-y-0 group-hover/clear:opacity-100">
+                  Clear search
+                </span>
+              </button>
+            )}
+          </div>
+        </div>
 
         <div className="mt-6 space-y-3">
           {isLoadingProducts ? (
