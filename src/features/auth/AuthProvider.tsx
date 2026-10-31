@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -16,7 +17,10 @@ import {
   type AuthContextValue,
 } from "./auth-context";
 
-import { setAccessTokenGetter } from "../../lib/api/client";
+import {
+  setAccessTokenGetter,
+  setRefreshAccessToken,
+} from "../../lib/api/client";
 
 import { refresh } from "./api/refresh";
 import { getProfile } from "./api/profile";
@@ -51,6 +55,25 @@ export function AuthProvider({
       setAccessToken(token);
     }
 
+    const clearAuthentication = useCallback(() => {
+    updateAccessToken(null);
+    setUser(null);
+    setStatus("unauthenticated");
+    }, []);
+
+    const refreshAccessToken = useCallback(async (): Promise<string | null> => {
+      try {
+        const result = await refresh();
+
+        updateAccessToken(result.accessToken);
+
+        return result.accessToken;
+      } catch (error) {
+        clearAuthentication();
+        throw error;
+      }
+    }, [clearAuthentication]);
+
   function setAuthentication(
     token: string,
     authenticatedUser: AuthenticatedUser,
@@ -59,13 +82,6 @@ export function AuthProvider({
     setUser(authenticatedUser);
     setStatus("authenticated");
   }
-
-  function clearAuthentication() {
-    updateAccessToken(null);
-    setUser(null);
-    setStatus("unauthenticated");
-  }
-
   
   async function login(input: LoginInput) {
     const result = await loginApi(input);
@@ -84,10 +100,13 @@ export function AuthProvider({
   useEffect(() => {
     setAccessTokenGetter(() => accessTokenRef.current);
 
+    setRefreshAccessToken(refreshAccessToken);
+
     return () => {
       setAccessTokenGetter(null);
+      setRefreshAccessToken(null);
     };
-  }, []);
+  }, [refreshAccessToken]);
 
   useEffect(() => {
   let isMounted = true;
