@@ -1,12 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 import { createProduct } from "../features/products/api/createProduct";
+import type { Product } from "../features/products/api/createProduct";
+import { updateProduct } from "../features/products/api/updateProduct";
 import {
   getProducts,
   type ProductListItem,
 } from "../features/products/api/getProducts";
 import { useToast } from "../components/feedback/useToast";
 
-import { ImagePlus, Plus, Zap, Package, X } from "lucide-react";
+import {
+  ImagePlus,
+  Plus,
+  Zap,
+  Package,
+  X,
+  ChevronDown,
+  ChevronUp,
+  Pencil,
+  AlignLeft,
+} from "lucide-react";
+
+type EditableProduct = Pick<
+  Product,
+  | "id"
+  | "name"
+  | "sku"
+  | "description"
+  | "imageUrl"
+  | "costPrice"
+  | "sellingPrice"
+  | "minimumStock"
+>;
 
 export function ProductsPage() {
   const { notify } = useToast();
@@ -31,6 +55,23 @@ export function ProductsPage() {
   const [floatingQuickAccessOpen, setFloatingQuickAccessOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [editingProduct, setEditingProduct] = useState<EditableProduct | null>(
+    null,
+  ); //Product
+  const [openActionProductId, setOpenActionProductId] = useState<string | null>(
+    null,
+  );
+
+  const [editName, setEditName] = useState("");
+  const [editSku, setEditSku] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editCostPrice, setEditCostPrice] = useState("");
+  const [editSellingPrice, setEditSellingPrice] = useState("");
+  const [editMinimumStock, setEditMinimumStock] = useState("");
+  const [editImage, setEditImage] = useState<File | undefined>();
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+  const [isUpdatingProduct, setIsUpdatingProduct] = useState(false);
+  const [isEditDragging, setIsEditDragging] = useState(false);
 
   const productsSectionRef = useRef<HTMLElement | null>(null);
 
@@ -47,6 +88,40 @@ export function ProductsPage() {
 
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
+  }
+
+  function handleEditImageChange(file?: File) {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      notify({
+        type: "error",
+        message: "Please select a valid image file.",
+      });
+      return;
+    }
+
+    setEditImage(file);
+    setEditImagePreview(URL.createObjectURL(file));
+  }
+
+  function handleRemoveEditImage() {
+    setEditImage(undefined);
+    setEditImagePreview(null);
+  }
+
+  function handleOpenEditModal(product: EditableProduct) {
+    setEditingProduct(product);
+
+    setEditName(product.name);
+    setEditSku(product.sku);
+    setEditDescription(product.description ?? "");
+    setEditCostPrice(String(product.costPrice));
+    setEditSellingPrice(String(product.sellingPrice));
+    setEditMinimumStock(String(product.minimumStock));
+
+    setEditImage(undefined);
+    setEditImagePreview(product.imageUrl);
   }
 
   function scrollToSection(id: string) {
@@ -155,6 +230,52 @@ export function ProductsPage() {
       setLoading(false);
     }
   }
+
+  async function handleUpdateProduct(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingProduct) return;
+
+    setIsUpdatingProduct(true);
+
+    try {
+      await updateProduct(editingProduct.id, {
+        name: editName,
+        sku: editSku,
+        description: editDescription,
+        costPrice: Number(editCostPrice),
+        sellingPrice: Number(editSellingPrice),
+        minimumStock: Number(editMinimumStock),
+        image: editImage,
+      });
+
+      notify({
+        type: "success",
+        message: "Product updated successfully.",
+      });
+
+      setEditingProduct(null);
+      setRefreshKey((currentKey) => currentKey + 1);
+    } catch (error) {
+      notify({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to update product.",
+      });
+    } finally {
+      setIsUpdatingProduct(false);
+    }
+  }
+
+  const hasEditChanges =
+    editingProduct !== null &&
+    (editName !== editingProduct.name ||
+      editSku !== editingProduct.sku ||
+      editDescription !== (editingProduct.description ?? "") ||
+      Number(editCostPrice) !== editingProduct.costPrice ||
+      Number(editSellingPrice) !== editingProduct.sellingPrice ||
+      Number(editMinimumStock) !== editingProduct.minimumStock ||
+      editImage !== undefined);
 
   return (
     <div className="space-y-6">
@@ -488,6 +609,7 @@ export function ProductsPage() {
                 key={product.id}
                 className="rounded-lg border border-border p-4"
               >
+                {/* Product header */}
                 <div className="flex items-center gap-4">
                   {product.imageUrl ? (
                     <img
@@ -516,33 +638,86 @@ export function ProductsPage() {
                   </p>
                 </div>
 
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-                  <div>
-                    <p className="text-text-secondary">Cost Price</p>
-                    <p className="font-medium text-text-primary">
-                      {product.costPrice}
+                {product.description && (
+                  <div className="mt-3 flex items-start gap-2">
+                    <AlignLeft
+                      size={15}
+                      className="mt-0.5 shrink-0 text-text-secondary"
+                    />
+
+                    <p className="text-sm text-text-secondary line-clamp-2">
+                      {product.description}
                     </p>
                   </div>
+                )}
 
-                  <div>
-                    <p className="text-text-secondary">Selling Price</p>
-                    <p className="font-medium text-text-primary">
-                      {product.sellingPrice}
-                    </p>
+                {/* Product details and actions */}
+                <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
+                  <div className="grid flex-1 grid-cols-2 gap-4 text-sm md:grid-cols-4">
+                    <div>
+                      <p className="text-text-secondary">Cost Price</p>
+                      <p className="font-medium text-text-primary">
+                        {product.costPrice}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-text-secondary">Selling Price</p>
+                      <p className="font-medium text-text-primary">
+                        {product.sellingPrice}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-text-secondary">Stock</p>
+                      <p className="font-medium text-text-primary">
+                        {product.stockQuantity}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-text-secondary">Minimum Stock</p>
+                      <p className="font-medium text-text-primary">
+                        {product.minimumStock}
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-text-secondary">Stock</p>
-                    <p className="font-medium text-text-primary">
-                      {product.stockQuantity}
-                    </p>
-                  </div>
+                  {/* Product actions */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenActionProductId((current) =>
+                          current === product.id ? null : product.id,
+                        )
+                      }
+                      aria-expanded={openActionProductId === product.id}
+                      className="flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-sm text-text-primary transition hover:bg-background"
+                    >
+                      Actions
+                      {openActionProductId === product.id ? (
+                        <ChevronUp size={16} />
+                      ) : (
+                        <ChevronDown size={16} />
+                      )}
+                    </button>
 
-                  <div>
-                    <p className="text-text-secondary">Minimum Stock</p>
-                    <p className="font-medium text-text-primary">
-                      {product.minimumStock}
-                    </p>
+                    {openActionProductId === product.id && (
+                      <div className="absolute bottom-full right-0 z-10 mb-2 w-40 rounded-lg border border-border bg-surface p-2 shadow-lg">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleOpenEditModal(product);
+                            setOpenActionProductId(null);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                        >
+                          <Pencil size={16} />
+                          Edit
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -590,6 +765,237 @@ export function ProductsPage() {
               Next
             </button>
           </div>
+
+          {editingProduct && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              onMouseDown={(event) => {
+                if (event.target === event.currentTarget) {
+                  setEditingProduct(null);
+                }
+              }}
+            >
+              <div className="w-full max-w-2xl rounded-xl border border-border bg-surface p-6 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-text-primary">
+                    Edit Product
+                  </h2>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditingProduct(null)}
+                    aria-label="Close edit product modal"
+                    className="rounded-lg p-2 text-text-secondary transition hover:bg-background hover:text-text-primary"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <p className="mt-1 text-sm text-text-secondary">
+                  Update the details for {editingProduct.name}.
+                </p>
+
+                <form
+                  onSubmit={handleUpdateProduct}
+                  className="mt-6 grid max-h-[75vh] grid-cols-1 gap-5 overflow-y-auto pr-1 md:grid-cols-2"
+                >
+                  {/* Product name */}
+                  <div>
+                    <label className="text-sm font-medium text-text-primary">
+                      Product Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(event) => setEditName(event.target.value)}
+                      required
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  {/* SKU */}
+                  <div>
+                    <label className="text-sm font-medium text-text-primary">
+                      SKU
+                    </label>
+                    <input
+                      type="text"
+                      value={editSku}
+                      onChange={(event) => setEditSku(event.target.value)}
+                      required
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-text-primary">
+                      Description
+                    </label>
+                    <textarea
+                      value={editDescription}
+                      onChange={(event) =>
+                        setEditDescription(event.target.value)
+                      }
+                      rows={3}
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Cost price */}
+                  <div>
+                    <label className="text-sm font-medium text-text-primary">
+                      Cost Price
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editCostPrice}
+                      onChange={(event) => setEditCostPrice(event.target.value)}
+                      required
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Selling price */}
+                  <div>
+                    <label className="text-sm font-medium text-text-primary">
+                      Selling Price
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editSellingPrice}
+                      onChange={(event) =>
+                        setEditSellingPrice(event.target.value)
+                      }
+                      required
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Minimum stock */}
+                  <div>
+                    <label className="text-sm font-medium text-text-primary">
+                      Minimum Stock
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editMinimumStock}
+                      onChange={(event) =>
+                        setEditMinimumStock(event.target.value)
+                      }
+                      required
+                      className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  {/* Image upload */}
+                  <div className="md:col-span-2">
+                    <label className="text-sm font-medium text-text-primary">
+                      Product Image
+                    </label>
+
+                    <div
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        setIsEditDragging(true);
+                      }}
+                      onDragLeave={() => setIsEditDragging(false)}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        setIsEditDragging(false);
+                        handleEditImageChange(event.dataTransfer.files?.[0]);
+                      }}
+                      className={`mt-2 rounded-xl border-2 border-dashed p-5 transition ${
+                        isEditDragging
+                          ? "border-primary bg-primary/5"
+                          : "border-border"
+                      }`}
+                    >
+                      {editImagePreview ? (
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                          <img
+                            src={editImagePreview}
+                            alt="Product preview"
+                            className="h-28 w-28 rounded-lg object-cover"
+                          />
+
+                          <div className="flex flex-wrap gap-3">
+                            <label className="cursor-pointer rounded-lg border border-border px-3 py-2 text-sm font-medium text-text-primary transition hover:bg-background">
+                              Change Image
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={(event) =>
+                                  handleEditImageChange(event.target.files?.[0])
+                                }
+                              />
+                            </label>
+
+                            <button
+                              type="button"
+                              onClick={handleRemoveEditImage}
+                              className="rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <label className="flex cursor-pointer flex-col items-center justify-center py-6 text-center">
+                          <ImagePlus
+                            size={24}
+                            className="text-text-secondary"
+                          />
+                          <p className="mt-3 text-sm font-medium text-text-primary">
+                            Upload product image
+                          </p>
+                          <p className="mt-1 text-xs text-text-secondary">
+                            Drag and drop an image here, or click to browse
+                          </p>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(event) =>
+                              handleEditImageChange(event.target.files?.[0])
+                            }
+                          />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Modal actions */}
+                  <div className="flex justify-end gap-3 md:col-span-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingProduct(null)}
+                      disabled={isUpdatingProduct}
+                      className="rounded-lg border border-border px-4 py-2 text-sm text-text-primary transition hover:bg-background disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isUpdatingProduct || !hasEditChanges}
+                      className={`rounded-lg px-5 py-2.5 font-medium transition-colors ${
+                        isUpdatingProduct || !hasEditChanges
+                          ? "cursor-not-allowed bg-gray-400 text-gray-200 opacity-60"
+                          : "bg-primary text-white hover:bg-primary/90"
+                      }`}
+                    >
+                      {isUpdatingProduct ? "Saving..." : "Save Changes"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 

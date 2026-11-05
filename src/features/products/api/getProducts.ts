@@ -11,6 +11,7 @@ export interface ProductListItem {
   id: string;
   name: string;
   sku: string;
+  description: string | null;
   imageUrl: string | null;
   costPrice: number;
   sellingPrice: number;
