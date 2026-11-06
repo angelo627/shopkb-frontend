@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useToast } from "../components/feedback/useToast";
 import { createProduct } from "../features/products/api/createProduct";
 import type { Product } from "../features/products/api/createProduct";
 import { updateProduct } from "../features/products/api/updateProduct";
@@ -6,7 +7,8 @@ import {
   getProducts,
   type ProductListItem,
 } from "../features/products/api/getProducts";
-import { useToast } from "../components/feedback/useToast";
+import { deleteProduct } from "../features/products/api/deleteproduct";
+import { DeactivateProduct } from "../features/products/sections/DeactivateProduct";
 
 import {
   ImagePlus,
@@ -18,6 +20,9 @@ import {
   ChevronUp,
   Pencil,
   AlignLeft,
+  Trash2,
+  AlertTriangle,
+  Power,
 } from "lucide-react";
 
 type EditableProduct = Pick<
@@ -74,6 +79,10 @@ export function ProductsPage() {
   const [isEditDragging, setIsEditDragging] = useState(false);
 
   const productsSectionRef = useRef<HTMLElement | null>(null);
+
+  const [deletingProduct, setDeletingProduct] = useState<ProductListItem | null>(null);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+  const [deactivatingProduct, setDeactivatingProduct] = useState<ProductListItem | null>(null);
 
   function handleImageChange(file?: File) {
     if (!file) return;
@@ -275,7 +284,33 @@ export function ProductsPage() {
       Number(editCostPrice) !== editingProduct.costPrice ||
       Number(editSellingPrice) !== editingProduct.sellingPrice ||
       Number(editMinimumStock) !== editingProduct.minimumStock ||
-      editImage !== undefined);
+  editImage !== undefined);
+
+  async function handleDeleteProduct() {
+    if (!deletingProduct) return;
+
+    setIsDeletingProduct(true);
+
+    try {
+      await deleteProduct(deletingProduct.id);
+
+      notify({
+        type: "success",
+        message: "Product deleted successfully.",
+      });
+
+      setDeletingProduct(null);
+      setRefreshKey((currentKey) => currentKey + 1);
+    } catch (error) {
+      notify({
+        type: "error",
+        message:
+          error instanceof Error ? error.message : "Failed to delete product.",
+      });
+    } finally {
+      setIsDeletingProduct(false);
+    }
+  }  
 
   return (
     <div className="space-y-6">
@@ -705,6 +740,37 @@ export function ProductsPage() {
 
                     {openActionProductId === product.id && (
                       <div className="absolute bottom-full right-0 z-10 mb-2 w-40 rounded-lg border border-border bg-surface p-2 shadow-lg">
+                        {/* DeactivateProduct */}
+                        {product.status !== "INACTIVE" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDeactivatingProduct(product);
+                              setOpenActionProductId(null);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-amber-600 transition hover:bg-background"
+                          >
+                            <Power size={16} />
+                            Deactivate
+                          </button>
+                        )}
+
+                        {/* Delete action */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDeletingProduct(product);
+                            setOpenActionProductId(null);
+                          }}
+                          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-500 transition hover:bg-background"
+                        >
+                          <Trash2 size={16} />
+                          Delete
+                        </button>
+
+                        <hr className="my-2 border-border" />
+
+                        {/* Edit action */}
                         <button
                           type="button"
                           onClick={() => {
@@ -723,6 +789,15 @@ export function ProductsPage() {
               </div>
             ))
           )}
+
+          {/* DeactivateProductcomponent-- */}
+          <DeactivateProduct
+            product={deactivatingProduct}
+            onClose={() => setDeactivatingProduct(null)}
+            onSuccess={() => {
+              setRefreshKey((currentKey) => currentKey + 1);
+            }}
+          />
         </div>
 
         <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
@@ -993,6 +1068,94 @@ export function ProductsPage() {
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+
+          {deletingProduct && (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+              onMouseDown={(event) => {
+                if (
+                  !isDeletingProduct &&
+                  event.target === event.currentTarget
+                ) {
+                  setDeletingProduct(null);
+                }
+              }}
+            >
+              <div
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="delete-product-title"
+                aria-describedby="delete-product-description"
+                className="w-full max-w-md rounded-xl border border-border bg-surface p-6 shadow-xl"
+              >
+                {/* Dialog heading */}
+                <div className="flex items-center justify-between">
+                  <h2
+                    id="delete-product-title"
+                    className="text-lg font-semibold text-text-primary"
+                  >
+                    Delete Product
+                  </h2>
+
+                  <button
+                    type="button"
+                    disabled={isDeletingProduct}
+                    onClick={() => setDeletingProduct(null)}
+                    aria-label="Close delete confirmation"
+                    className="rounded-lg p-2 text-text-secondary transition hover:bg-background hover:text-text-primary disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Confirmation message */}
+                <p
+                  id="delete-product-description"
+                  className="mt-3 text-sm text-text-secondary"
+                >
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold text-text-primary">
+                    {deletingProduct.name}
+                  </span>
+                  ? This action will remove the product from your product list.
+                </p>
+
+                <div className="mt-4 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-500/5 p-3">
+                  <AlertTriangle
+                    size={18}
+                    className="mt-0.5 shrink-0 text-red-500"
+                  />
+
+                  <p className="text-sm text-red-600">
+                    <span className="font-semibold">Important:</span> Once
+                    deleted, this product cannot be recovered through the
+                    application. Please make sure you want to continue.
+                  </p>
+                </div>
+
+                {/* Dialog actions */}
+                <div className="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    disabled={isDeletingProduct}
+                    onClick={() => setDeletingProduct(null)}
+                    className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-primary transition hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={isDeletingProduct}
+                    onClick={handleDeleteProduct}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isDeletingProduct ? "Deleting..." : "Delete Product"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
