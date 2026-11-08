@@ -9,6 +9,8 @@ import {
 } from "../features/products/api/getProducts";
 import { deleteProduct } from "../features/products/api/deleteproduct";
 import { DeactivateProduct } from "../features/products/sections/DeactivateProduct";
+import { ReactivateProduct } from "../features/products/sections/ReactivateProduct";
+import { ReceiveStock } from "../features/products/sections/ReceiveStock";
 
 import {
   ImagePlus,
@@ -23,6 +25,10 @@ import {
   Trash2,
   AlertTriangle,
   Power,
+  ChevronLeft,
+  PackagePlus,
+  PackageMinus,
+  SlidersHorizontal,
 } from "lucide-react";
 
 type EditableProduct = Pick<
@@ -83,6 +89,9 @@ export function ProductsPage() {
   const [deletingProduct, setDeletingProduct] = useState<ProductListItem | null>(null);
   const [isDeletingProduct, setIsDeletingProduct] = useState(false);
   const [deactivatingProduct, setDeactivatingProduct] = useState<ProductListItem | null>(null);
+  const [reactivatingProduct, setReactivatingProduct] = useState<ProductListItem | null>(null);
+  const [isManageStockOpen, setIsManageStockOpen] = useState(false);
+  const [receivingProduct, setReceivingProduct] = useState<ProductListItem | null>(null);
 
   function handleImageChange(file?: File) {
     if (!file) return;
@@ -739,7 +748,91 @@ export function ProductsPage() {
                     </button>
 
                     {openActionProductId === product.id && (
-                      <div className="absolute bottom-full right-0 z-10 mb-2 w-40 rounded-lg border border-border bg-surface p-2 shadow-lg">
+                      <div className="absolute bottom-full right-0 z-10 mb-2 w-46 rounded-lg border border-border bg-surface p-2 shadow-lg">
+                        {/* Manage Stock */}
+                        <div
+                          className="relative"
+                          onMouseEnter={() => setIsManageStockOpen(true)}
+                          onMouseLeave={() => setIsManageStockOpen(false)}
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setIsManageStockOpen((current) => !current)
+                            }
+                            aria-expanded={isManageStockOpen}
+                            className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                          >
+                            <span className="flex items-center gap-2">
+                              <Package size={16} />
+                              Manage Stock
+                            </span>
+
+                            <ChevronLeft size={16} />
+                          </button>
+
+                          {isManageStockOpen && (
+                            <div className="absolute right-full top-0 z-20 mr-2 w-44 rounded-lg border border-border bg-surface p-2 shadow-lg">
+                              {/* Receive Stock */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setReceivingProduct(product);
+                                  setIsManageStockOpen(false);
+                                  setOpenActionProductId(null);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                              >
+                                <PackagePlus size={16} />
+                                Receive Stock
+                              </button>
+
+                              {/* Remove Stock */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // We'll implement this action next.
+                                  setIsManageStockOpen(false);
+                                  setOpenActionProductId(null);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                              >
+                                <PackageMinus size={16} />
+                                Remove Stock
+                              </button>
+
+                              {/* Adjust Stock */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  // We'll implement this action next.
+                                  setIsManageStockOpen(false);
+                                  setOpenActionProductId(null);
+                                }}
+                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                              >
+                                <SlidersHorizontal size={16} />
+                                Adjust Stock
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* ReactivateProduct */}
+                        {product.status === "INACTIVE" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setReactivatingProduct(product);
+                              setOpenActionProductId(null);
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-emerald-600 transition hover:bg-background"
+                          >
+                            <Power size={16} />
+                            Activate
+                          </button>
+                        )}
+
                         {/* DeactivateProduct */}
                         {product.status !== "INACTIVE" && (
                           <button
@@ -789,6 +882,24 @@ export function ProductsPage() {
               </div>
             ))
           )}
+
+          {/* ReceiveStockcomponent-- */}
+          <ReceiveStock
+            product={receivingProduct}
+            onClose={() => setReceivingProduct(null)}
+            onSuccess={() => {
+              setRefreshKey((currentKey) => currentKey + 1);
+            }}
+          />
+
+          {/* ReactivateProductcomponent-- */}
+          <ReactivateProduct
+            product={reactivatingProduct}
+            onClose={() => setReactivatingProduct(null)}
+            onSuccess={() => {
+              setRefreshKey((currentKey) => currentKey + 1);
+            }}
+          />
 
           {/* DeactivateProductcomponent-- */}
           <DeactivateProduct
