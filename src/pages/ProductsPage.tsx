@@ -11,6 +11,8 @@ import { deleteProduct } from "../features/products/api/deleteproduct";
 import { DeactivateProduct } from "../features/products/sections/DeactivateProduct";
 import { ReactivateProduct } from "../features/products/sections/ReactivateProduct";
 import { ReceiveStock } from "../features/products/sections/ReceiveStock";
+import { RemoveStock } from "../features/products/sections/RemoveStock";
+import { AdjustStock } from "../features/products/sections/AdjustStock";
 
 import {
   ImagePlus,
@@ -92,6 +94,8 @@ export function ProductsPage() {
   const [reactivatingProduct, setReactivatingProduct] = useState<ProductListItem | null>(null);
   const [isManageStockOpen, setIsManageStockOpen] = useState(false);
   const [receivingProduct, setReceivingProduct] = useState<ProductListItem | null>(null);
+  const [removingProduct, setRemovingProduct] = useState<ProductListItem | null>(null);
+  const [adjustingProduct, setAdjustingProduct] = useState<ProductListItem | null>(null);
 
   function handleImageChange(file?: File) {
     if (!file) return;
@@ -772,7 +776,13 @@ export function ProductsPage() {
                           </button>
 
                           {isManageStockOpen && (
-                            <div className="absolute right-full top-0 z-20 mr-2 w-44 rounded-lg border border-border bg-surface p-2 shadow-lg">
+                            <div className="absolute right-full top-0 z-20 mr-4 w-64 rounded-lg border border-border bg-surface p-2 shadow-lg">
+                              {/* invisible bridge for submenu */}
+                              <div
+                                className="absolute left-full top-0 h-full w-6"
+                                aria-hidden="true"
+                              />
+
                               {/* Receive Stock */}
                               <button
                                 type="button"
@@ -781,38 +791,74 @@ export function ProductsPage() {
                                   setIsManageStockOpen(false);
                                   setOpenActionProductId(null);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                                className="flex w-full items-start gap-3 rounded-md px-3 py-3 text-left text-text-primary transition hover:bg-background"
                               >
-                                <PackagePlus size={16} />
-                                Receive Stock
+                                <PackagePlus
+                                  size={17}
+                                  className="mt-0.5 shrink-0 text-green-500"
+                                />
+                                <span className="flex flex-col gap-1">
+                                  <span className="text-sm font-medium">
+                                    Receive Stock
+                                  </span>
+                                  <span className="text-xs leading-relaxed text-text-secondary">
+                                    Record newly purchased or supplied stock.
+                                  </span>
+                                </span>
                               </button>
+
+                              <div className="mx-2 h-px border-t-2 border-border" />
 
                               {/* Remove Stock */}
                               <button
                                 type="button"
                                 onClick={() => {
-                                  // We'll implement this action next.
+                                  setRemovingProduct(product);
                                   setIsManageStockOpen(false);
                                   setOpenActionProductId(null);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                                className="flex w-full items-start gap-3 rounded-md px-3 py-3 text-left text-text-primary transition hover:bg-background"
                               >
-                                <PackageMinus size={16} />
-                                Remove Stock
+                                <PackageMinus
+                                  size={17}
+                                  className="mt-0.5 shrink-0 text-red-500"
+                                />
+                                <span className="flex flex-col gap-1">
+                                  <span className="text-sm font-medium">
+                                    Remove Stock
+                                  </span>
+                                  <span className="text-xs leading-relaxed text-text-secondary">
+                                    Record products physically leaving
+                                    inventory.
+                                  </span>
+                                </span>
                               </button>
+
+                              <div className="mx-2 h-px border-t-2 border-border" />
 
                               {/* Adjust Stock */}
                               <button
                                 type="button"
                                 onClick={() => {
-                                  // We'll implement this action next.
+                                  setAdjustingProduct(product);
                                   setIsManageStockOpen(false);
                                   setOpenActionProductId(null);
                                 }}
-                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text-primary transition hover:bg-background"
+                                className="flex w-full items-start gap-3 rounded-md px-3 py-3 text-left text-text-primary transition hover:bg-background"
                               >
-                                <SlidersHorizontal size={16} />
-                                Adjust Stock
+                                <SlidersHorizontal
+                                  size={17}
+                                  className="mt-0.5 shrink-0 text-orange-500"
+                                />
+                                <span className="flex flex-col gap-1">
+                                  <span className="text-sm font-medium">
+                                    Adjust Stock
+                                  </span>
+                                  <span className="text-xs leading-relaxed text-text-secondary">
+                                    Correct differences in recorded stock
+                                    counts.
+                                  </span>
+                                </span>
                               </button>
                             </div>
                           )}
@@ -882,6 +928,24 @@ export function ProductsPage() {
               </div>
             ))
           )}
+
+          {/* AdjustStockcomponent-- */}
+          <AdjustStock
+            product={adjustingProduct}
+            onClose={() => setAdjustingProduct(null)}
+            onSuccess={() => {
+              setRefreshKey((currentKey) => currentKey + 1);
+            }}
+          />
+
+          {/* RemoveStockcomponent-- */}
+          <RemoveStock
+            product={removingProduct}
+            onClose={() => setRemovingProduct(null)}
+            onSuccess={() => {
+              setRefreshKey((currentKey) => currentKey + 1);
+            }}
+          />
 
           {/* ReceiveStockcomponent-- */}
           <ReceiveStock
