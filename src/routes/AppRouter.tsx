@@ -9,7 +9,7 @@ import { SalesPage } from "../pages/sales/SalesPage";
 import { InventoryPage } from "../pages/inventory/InventoryPage";
 import { FinancePage } from "../pages/FinancePage";
 import { UsersPage } from "../pages/UsersPage";
-import { ReportsPage } from "../pages/ReportsPage";
+import { ReportsPage } from "../pages/AdminReportsPage";
 import { ProductsPage } from "../pages/ProductsPage";
 import { ActivityPage } from "../pages/ActivityPage";
 import { SettingsPage } from "../pages/SettingsPage";
