@@ -1,3 +1,5 @@
+import { CreateSale } from "../../features/sales/sections/CreateSale";
+
 export function AdminSalesContent() {
   return (
     <>
@@ -28,6 +30,9 @@ export function AdminSalesContent() {
         </div>
       </section>
 
+      {/* Create Sale */}
+      <CreateSale />
+
       {/* Sales Table */}
       <section className="rounded-xl border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border p-6">
@@ -40,13 +45,6 @@ export function AdminSalesContent() {
               Your latest sales transactions.
             </p>
           </div>
-
-          <button
-            type="button"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition hover:bg-primary-hover"
-          >
-            New Sale
-          </button>
         </div>
 
         <div className="overflow-x-auto">

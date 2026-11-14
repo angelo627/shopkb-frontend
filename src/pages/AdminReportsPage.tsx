@@ -11,6 +11,7 @@ import {
   getMonthlyReport,
   type MonthlyReportResponse,
 } from "../features/report/api/getMonthlyReport";
+import { useToast } from "../components/feedback/useToast";
 
 import { ShoppingBag, PackagePlus, Activity, Banknote } from "lucide-react";
 
@@ -30,6 +31,8 @@ const months = [
 ];
 
 export function ReportsPage() {
+  const { notify } = useToast();
+
   const [report, setReport] = useState<DailyReportResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,14 +64,20 @@ export function ReportsPage() {
         const data = await getDailyReport();
         setReport(data);
       } catch (error) {
-        console.error("Failed to fetch daily report:", error);
+        notify({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to load daily report. Please try again.",
+        });
       } finally {
         setIsLoading(false);
       }
     }
 
     fetchReport();
-  }, []);
+  }, [notify]);
 
   useEffect(() => {
     async function fetchWeeklyReport() {
@@ -76,14 +85,20 @@ export function ReportsPage() {
         const data = await getWeeklyReport();
         setWeeklyReport(data);
       } catch (error) {
-        console.error("Failed to fetch weekly report:", error);
+        notify({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to load weekly report. Please try again.",
+        });
       } finally {
         setIsWeeklyLoading(false);
       }
     }
 
     fetchWeeklyReport();
-  }, []);
+  }, [notify]);
 
   useEffect(() => {
     async function fetchMonthlyReport() {
@@ -95,14 +110,20 @@ export function ReportsPage() {
         setSelectedMonth(data.month);
         setCurrentBusinessYear(data.year);
       } catch (error) {
-        console.error("Failed to fetch monthly report:", error);
+        notify({
+          type: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to load monthly report. Please try again.",
+        });
       } finally {
         setIsMonthlyLoading(false);
       }
     }
 
     fetchMonthlyReport();
-  }, []);
+  }, [notify]);
 
   async function handleMonthlyReportChange(year: number, month: number) {
     setIsMonthlyLoading(true);
@@ -111,7 +132,13 @@ export function ReportsPage() {
       const data = await getMonthlyReport(year, month);
       setMonthlyReport(data);
     } catch (error) {
-      console.error("Failed to fetch selected monthly report:", error);
+      notify({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to load the selected monthly report. Please try again.",
+      });
     } finally {
       setIsMonthlyLoading(false);
     }
