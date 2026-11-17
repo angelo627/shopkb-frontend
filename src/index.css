@@ -110,3 +110,56 @@ a {
         opacity: 0;
         transform: translateY(-8px) scale(0.98);
     } }
+
+/* body */
+@media print {
+    body>*:not(#sale-receipt-print) {
+        display: none !important;
+    }
+
+    #sale-receipt-print {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        color: black !important;
+        overflow: visible !important;
+    }
+
+    #sale-receipt-print .receipt-page {
+        display: block !important;
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 3mm !important;
+        overflow: visible !important;
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+    }
+
+    #sale-receipt-print .receipt-page:not(:last-child) {
+        break-after: auto !important;
+        page-break-after: auto !important;
+    }
+    
+    html[data-receipt-format="a4"] #sale-receipt-print .receipt-page:not(:last-child),
+    html[data-receipt-format="58mm"] #sale-receipt-print .receipt-page:not(:last-child) {
+        break-after: page !important;
+        page-break-after: always !important;
+    }
+
+    #sale-receipt-print table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    #sale-receipt-print tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+}
