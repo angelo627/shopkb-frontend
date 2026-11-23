@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import type { SaleReceiptResponse } from "../api/getSaleReceipt";
 import { jsPDF } from "jspdf";
+import { useToast } from "../../../components/feedback/useToast";
 
 interface SaleReceiptModalProps {
   receipt: SaleReceiptResponse;
@@ -8,6 +9,8 @@ interface SaleReceiptModalProps {
 }
 
 export function SaleReceiptModal({ receipt, onClose }: SaleReceiptModalProps) {
+    const { notify } = useToast();
+    
     const receiptRef = useRef<HTMLDivElement>(null);
 
     type PrintFormat = "a4" | "80mm" | "58mm";
@@ -252,7 +255,13 @@ export function SaleReceiptModal({ receipt, onClose }: SaleReceiptModalProps) {
 
       pdf.save(`ShopKB-Receipt-${receipt.saleId}.pdf`);
     } catch (error) {
-      console.error("PDF download failed:", error);
+      notify({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "PDF download failed. Please try again.",
+      });
     }
   }
   
