@@ -13,138 +13,141 @@ import { createSale } from "../api/createSale";
 import { SaleReceiptModal } from "./SaleReceiptModal";
 import { X } from "lucide-react";
 
-export function CreateSale() {
-    const { notify } = useToast();
-    const [searchTerm, setSearchTerm] = useState("");
-    const [searchResults, setSearchResults] = useState<ProductListItem[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [selectedItems, setSelectedItems] = useState<SelectedSaleItem[]>([]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+interface CreateSaleProps {
+  onSaleCreated: () => void;
+}
 
-    const [receipt, setReceipt] = useState<SaleReceiptResponse | null>(null);
+export function CreateSale({ onSaleCreated }: CreateSaleProps) {
+  const { notify } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<ProductListItem[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<SelectedSaleItem[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    function handleAddProduct(product: ProductListItem) {
-      setSelectedItems((prev) => {
-        const alreadyAdded = prev.some(
-          (item) => item.product.id === product.id,
-        );
+  const [receipt, setReceipt] = useState<SaleReceiptResponse | null>(null);
 
-        if (alreadyAdded) return prev;
+  function handleAddProduct(product: ProductListItem) {
+    setSelectedItems((prev) => {
+      const alreadyAdded = prev.some((item) => item.product.id === product.id);
 
-        return [...prev, { product, quantity: 1 }];
-      });
+      if (alreadyAdded) return prev;
 
-      setSearchTerm("");
-      setSearchResults([]);
-      setIsSearching(false);
-    }
+      return [...prev, { product, quantity: 1 }];
+    });
 
-    useEffect(() => {
-      const query = searchTerm.trim();
+    setSearchTerm("");
+    setSearchResults([]);
+    setIsSearching(false);
+  }
 
-      if (!query) return;
+  useEffect(() => {
+    const query = searchTerm.trim();
 
-      let active = true;
+    if (!query) return;
 
-      const timeout = setTimeout(async () => {
-        setIsSearching(true);
+    let active = true;
 
-        try {
-          const response = await getProducts({
-            page: 1,
-            limit: 8,
-            // status: "AVAILABLE",
-            search: query,
-          });
-
-          if (active) {
-            setSearchResults(response.items);
-          }
-        } catch (error) {
-          if (active) {
-            setSearchResults([]);
-
-            notify({
-              type: "error",
-              message:
-                error instanceof Error
-                  ? error.message
-                  : "Unable to search products. Please try again.",
-            });
-          }
-        } finally {
-          if (active) {
-            setIsSearching(false);
-          }
-        }
-      }, 300);
-
-      return () => {
-        active = false;
-        clearTimeout(timeout);
-      };
-    }, [searchTerm, notify]);
-
-    function handleQuantityChange(productId: string, quantity: number) {
-      setSelectedItems((prev) =>
-        prev.map((item) =>
-          item.product.id === productId ? { ...item, quantity } : item,
-        ),
-      );
-    }
-
-    function handleRemoveProduct(productId: string) {
-      setSelectedItems((prev) =>
-        prev.filter((item) => item.product.id !== productId),
-      );
-    }
-
-    const totalAmount = selectedItems.reduce(
-      (total, item) => total + item.product.sellingPrice * item.quantity,
-      0,
-    );
-
-    async function handleCompleteSale() {
-      if (selectedItems.length === 0) return;
-
-      setIsSubmitting(true);
+    const timeout = setTimeout(async () => {
+      setIsSearching(true);
 
       try {
-        const sale = await createSale({
-          items: selectedItems.map((item) => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-          })),
+        const response = await getProducts({
+          page: 1,
+          limit: 8,
+          // status: "AVAILABLE",
+          search: query,
         });
 
-        setSelectedItems([]);
-
-        notify({
-          type: "success",
-          message: "Sale completed successfully.",
-        });
-
-        try {
-          const receiptData = await getSaleReceipt(sale.id);
-          setReceipt(receiptData);
-        } catch{
-          notify({
-            type: "retry",
-            message: "Sale completed, but receipt could not be retrieved.",
-          });
+        if (active) {
+          setSearchResults(response.items);
         }
       } catch (error) {
-        notify({
-          type: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Unable to complete sale. Please try again.",
-        });
+        if (active) {
+          setSearchResults([]);
+
+          notify({
+            type: "error",
+            message:
+              error instanceof Error
+                ? error.message
+                : "Unable to search products. Please try again.",
+          });
+        }
       } finally {
-        setIsSubmitting(false);
+        if (active) {
+          setIsSearching(false);
+        }
       }
+    }, 300);
+
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+    };
+  }, [searchTerm, notify]);
+
+  function handleQuantityChange(productId: string, quantity: number) {
+    setSelectedItems((prev) =>
+      prev.map((item) =>
+        item.product.id === productId ? { ...item, quantity } : item,
+      ),
+    );
+  }
+
+  function handleRemoveProduct(productId: string) {
+    setSelectedItems((prev) =>
+      prev.filter((item) => item.product.id !== productId),
+    );
+  }
+
+  const totalAmount = selectedItems.reduce(
+    (total, item) => total + item.product.sellingPrice * item.quantity,
+    0,
+  );
+
+  async function handleCompleteSale() {
+    if (selectedItems.length === 0) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const sale = await createSale({
+        items: selectedItems.map((item) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+      });
+
+      setSelectedItems([]);
+      onSaleCreated();
+
+      notify({
+        type: "success",
+        message: "Sale completed successfully.",
+      });
+
+      try {
+        const receiptData = await getSaleReceipt(sale.id);
+        setReceipt(receiptData);
+      } catch {
+        notify({
+          type: "retry",
+          message: "Sale completed, but receipt could not be retrieved.",
+        });
+      }
+    } catch (error) {
+      notify({
+        type: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Unable to complete sale. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
+  }
 
   return (
     <section className="rounded-xl border border-border bg-surface p-6">
